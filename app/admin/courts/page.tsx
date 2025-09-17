@@ -116,7 +116,18 @@ const PlayingTimer = ({ startTime }: { startTime: string }) => {
 }
 
 const ScoreDisplay = ({ courtId }: { courtId: string }) => {
-  const [score, setScore] = useState({ team1: [0, 0, 0], team2: [0, 0, 0], currentSet: 0 })
+  // Generate realistic fake scores based on courtId
+  const getFakeScore = (courtId: string) => {
+    const fakeScores = {
+      "court-1": { team1: [6, 4, 2], team2: [3, 6, 1] },
+      "court-2": { team1: [6, 2, 0], team2: [4, 6, 0] },
+      "court-3": { team1: [7, 6, 0], team2: [5, 4, 0] },
+      "court-4": { team1: [6, 3, 0], team2: [4, 6, 0] },
+    }
+    return fakeScores[courtId as keyof typeof fakeScores] || { team1: [0, 0, 0], team2: [0, 0, 0] }
+  }
+
+  const [score, setScore] = useState(getFakeScore(courtId))
 
   const updateScore = (team: "team1" | "team2", setIndex: number, increment: boolean) => {
     setScore((prev) => {
@@ -131,26 +142,26 @@ const ScoreDisplay = ({ courtId }: { courtId: string }) => {
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-blue-200">
-      <div className="text-center text-sm font-medium text-blue-800 mb-2">Score</div>
+    <div className="mt-3 pt-3 border-t border-gray-200">
+      <div className="text-center text-sm font-medium text-gray-800 mb-2">Score</div>
       <div className="flex justify-between items-center text-sm">
         <div className="flex-1">
-          <div className="font-medium text-blue-700">Team 1</div>
+          <div className="font-medium text-gray-700">Team 1</div>
           <div className="flex gap-1 mt-1">
             {score.team1.map((setScore, index) => (
               <div key={index} className="flex flex-col items-center">
                 <button
                   onClick={() => updateScore("team1", index, true)}
-                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-t text-xs flex items-center justify-center"
+                  className="w-6 h-4 bg-gray-100 hover:bg-gray-200 rounded-t text-xs flex items-center justify-center"
                 >
                   +
                 </button>
-                <div className="w-6 h-6 bg-white border border-blue-300 rounded text-xs flex items-center justify-center font-medium">
+                <div className="w-6 h-6 bg-white border border-gray-300 rounded text-xs flex items-center justify-center font-medium">
                   {setScore}
                 </div>
                 <button
                   onClick={() => updateScore("team1", index, false)}
-                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-b text-xs flex items-center justify-center"
+                  className="w-6 h-4 bg-gray-100 hover:bg-gray-200 rounded-b text-xs flex items-center justify-center"
                 >
                   -
                 </button>
@@ -158,24 +169,24 @@ const ScoreDisplay = ({ courtId }: { courtId: string }) => {
             ))}
           </div>
         </div>
-        <div className="px-2 text-blue-600 font-bold">VS</div>
+        <div className="px-2 text-gray-600 font-bold">VS</div>
         <div className="flex-1">
-          <div className="font-medium text-blue-700">Team 2</div>
+          <div className="font-medium text-gray-700">Team 2</div>
           <div className="flex gap-1 mt-1">
             {score.team2.map((setScore, index) => (
               <div key={index} className="flex flex-col items-center">
                 <button
                   onClick={() => updateScore("team2", index, true)}
-                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-t text-xs flex items-center justify-center"
+                  className="w-6 h-4 bg-gray-100 hover:bg-gray-200 rounded-t text-xs flex items-center justify-center"
                 >
                   +
                 </button>
-                <div className="w-6 h-6 bg-white border border-blue-300 rounded text-xs flex items-center justify-center font-medium">
+                <div className="w-6 h-6 bg-white border border-gray-300 rounded text-xs flex items-center justify-center font-medium">
                   {setScore}
                 </div>
                 <button
                   onClick={() => updateScore("team2", index, false)}
-                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-b text-xs flex items-center justify-center"
+                  className="w-6 h-4 bg-gray-100 hover:bg-gray-200 rounded-b text-xs flex items-center justify-center"
                 >
                   -
                 </button>
@@ -1280,14 +1291,14 @@ export default function CourtManagement() {
               key={court.id}
               className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                 court.status === "available"
-                  ? "border-green-300 bg-green-50 hover:border-green-400"
+                  ? "border-green-300 hover:border-green-400"
                   : court.status === "in-use"
-                    ? "border-blue-300 bg-blue-50"
+                    ? "border-blue-300"
                     : court.status === "maintenance"
-                      ? "border-orange-300 bg-orange-50"
+                      ? "border-orange-300"
                       : court.status === "tournament"
-                        ? "border-red-300 bg-red-50"
-                        : "border-purple-300 bg-purple-50"
+                        ? "border-red-300"
+                        : "border-purple-300"
               }`}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, court)}
@@ -1320,7 +1331,7 @@ export default function CourtManagement() {
                     {court.players.map((player, index) => (
                       <div
                         key={player.id}
-                        className="bg-blue-100 p-2 rounded text-sm text-center font-medium text-blue-800"
+                        className="bg-gray-100 p-2 rounded text-sm text-center font-medium text-gray-800"
                       >
                         {player.name.length > 10 ? `${player.name.substring(0, 10)}...` : player.name}
                       </div>
