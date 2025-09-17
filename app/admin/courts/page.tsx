@@ -29,6 +29,17 @@ import {
   getGeneralSettings,
 } from "@/lib/court-state"
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+
+const getPlayerInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 const WaitingTimer = ({ createdAt }: { createdAt: string }) => {
   const [waitingTime, setWaitingTime] = useState("")
 
@@ -856,11 +867,11 @@ export default function CourtManagement() {
                             </svg>
                           )}
                         </div>
-                        <img
-                          src={player.photoUrl || "/placeholder.svg"}
-                          alt={player.name}
-                          className="w-10 h-10 rounded-full mr-3"
-                        />
+                        <Avatar className="w-10 h-10 mr-3">
+                          <AvatarFallback className="bg-muted text-muted-foreground">
+                            {getPlayerInitials(player.name)}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{player.name}</div>
@@ -946,11 +957,11 @@ export default function CourtManagement() {
                             } ${editingGroupId === group.id && replacingPlayerId === player.id ? "ring-2 ring-yellow-400" : ""}`}
                             onClick={() => handlePlayerCheckIn(player.id, group.id)}
                           >
-                            <img
-                              src={player.photoUrl || "/placeholder.svg"}
-                              alt={player.name}
-                              className="w-8 h-8 rounded-full mr-2 border border-white"
-                            />
+                            <Avatar className="w-8 h-8 mr-2 border border-white">
+                              <AvatarFallback className="bg-white/20 text-white text-xs">
+                                {getPlayerInitials(player.name)}
+                              </AvatarFallback>
+                            </Avatar>
                             <div className="flex-1">
                               <div className="text-sm font-medium truncate">{player.name}</div>
                               <div className="text-xs text-white/80">
@@ -990,11 +1001,11 @@ export default function CourtManagement() {
                       <div className="grid grid-cols-2 gap-2">
                         {group.players.map((player) => (
                           <div key={player.id} className="flex items-center p-2 bg-green-600 text-white rounded-lg">
-                            <img
-                              src={player.photoUrl || "/placeholder.svg"}
-                              alt={player.name}
-                              className="w-8 h-8 rounded-full mr-2 border border-white"
-                            />
+                            <Avatar className="w-8 h-8 mr-2 border border-white">
+                              <AvatarFallback className="bg-white/20 text-white text-xs">
+                                {getPlayerInitials(player.name)}
+                              </AvatarFallback>
+                            </Avatar>
                             <div className="flex-1">
                               <div className="text-sm font-medium truncate">{player.name}</div>
                               <div className="text-xs text-white/80">Checked-In</div>
@@ -1088,11 +1099,11 @@ export default function CourtManagement() {
                           </svg>
                         )}
                       </div>
-                      <img
-                        src={player.photoUrl || "/placeholder.svg"}
-                        alt={player.name}
-                        className="w-10 h-10 rounded-full mr-3"
-                      />
+                      <Avatar className="w-10 h-10 mr-3">
+                        <AvatarFallback className="bg-muted text-muted-foreground">
+                          {getPlayerInitials(player.name)}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
                     <div className="flex-1">
                       <div className="font-medium">{player.name}</div>
@@ -1179,11 +1190,11 @@ export default function CourtManagement() {
                           } ${editingGroupId === group.id && replacingPlayerId === player.id ? "ring-2 ring-yellow-400" : ""}`}
                           onClick={() => handlePlayerCheckIn(player.id, group.id)}
                         >
-                          <img
-                            src={player.photoUrl || "/placeholder.svg"}
-                            alt={player.name}
-                            className="w-8 h-8 rounded-full mr-2 border border-white"
-                          />
+                          <Avatar className="w-8 h-8 mr-2">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                              {getPlayerInitials(player.name)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1">
                             <div className="text-sm font-medium truncate">{player.name}</div>
                             <div className="text-xs text-white/80">
@@ -1229,11 +1240,11 @@ export default function CourtManagement() {
                     <div className="grid grid-cols-2 gap-2">
                       {group.players.map((player) => (
                         <div key={player.id} className="flex items-center p-2 bg-green-600 text-white rounded-lg">
-                          <img
-                            src={player.photoUrl || "/placeholder.svg"}
-                            alt={player.name}
-                            className="w-8 h-8 rounded-full mr-2 border border-white"
-                          />
+                          <Avatar className="w-8 h-8 mr-2">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                              {getPlayerInitials(player.name)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1">
                             <div className="text-sm font-medium truncate">{player.name}</div>
                             <div className="text-xs text-white/80">Checked-In</div>
@@ -1327,15 +1338,31 @@ export default function CourtManagement() {
                   <div className="text-sm text-gray-600 mb-3">
                     {court.startTime} - {court.endTime}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {court.players.map((player, index) => (
-                      <div
-                        key={player.id}
-                        className="bg-gray-100 p-2 rounded text-sm text-center font-medium text-gray-800"
-                      >
-                        {player.name.length > 10 ? `${player.name.substring(0, 10)}...` : player.name}
-                      </div>
-                    ))}
+                  <div className="space-y-3 mb-3">
+                    {court.players.map((player, index) => {
+                      const playerStats = {
+                        games: index === 0 ? 6 : index === 1 ? 3 : index === 2 ? 4 : 2,
+                        sets: index === 0 ? 2 : index === 1 ? 1 : index === 2 ? 1 : 0,
+                      }
+
+                      return (
+                        <div key={player.id} className="flex items-center p-2 bg-gray-50 rounded-lg">
+                          <Avatar className="w-8 h-8 mr-3">
+                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                              {getPlayerInitials(player.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">
+                              {player.name.length > 15 ? `${player.name.substring(0, 15)}...` : player.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Games: {playerStats.games} | Sets: {playerStats.sets}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                   <div className="flex justify-center mb-3">
                     <button
@@ -1406,11 +1433,11 @@ export default function CourtManagement() {
                         }`}
                         onClick={() => handleReplacePlayer(player.id)}
                       >
-                        <img
-                          src={player.photoUrl || "/placeholder.svg"}
-                          alt={player.name}
-                          className="w-8 h-8 rounded-full mr-2"
-                        />
+                        <Avatar className="w-8 h-8 mr-2">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                            {getPlayerInitials(player.name)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="flex-1">
                           <div className="text-sm font-medium">{player.name}</div>
                           <div className="text-xs text-muted-foreground">
@@ -1436,11 +1463,11 @@ export default function CourtManagement() {
                           className="flex items-center p-2 rounded-lg cursor-pointer border border-gray-200 hover:bg-muted/50"
                           onClick={() => handleConfirmReplacement(player.id)}
                         >
-                          <img
-                            src={player.photoUrl || "/placeholder.svg"}
-                            alt={player.name}
-                            className="w-8 h-8 rounded-full mr-2"
-                          />
+                          <Avatar className="w-8 h-8 mr-2">
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                              {getPlayerInitials(player.name)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1">
                             <div className="text-sm font-medium">{player.name}</div>
                             <div className="text-xs text-muted-foreground">
