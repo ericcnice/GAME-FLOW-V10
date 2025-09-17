@@ -19,7 +19,6 @@ import {
   setPlayers,
   setCourts,
   updatePlayerPositions,
-  getStatusBadgeVariant,
   getStatusDisplayText,
   createPlayerGroup,
   getPlayerGroups,
@@ -29,8 +28,165 @@ import {
   checkInPlayer,
   getGeneralSettings,
 } from "@/lib/court-state"
-// Importe o novo componente
-import { CustomBadge } from "@/components/custom-badge"
+
+const WaitingTimer = ({ createdAt }: { createdAt: string }) => {
+  const [waitingTime, setWaitingTime] = useState("")
+
+  useEffect(() => {
+    const updateTimer = () => {
+      // Parse the createdAt time properly - assuming it's in HH:MM format
+      const today = new Date()
+      const [hours, minutes] = createdAt.split(":").map(Number)
+      const created = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes)
+      const now = new Date()
+      const diffMs = now.getTime() - created.getTime()
+
+      // If the time difference is negative, it means the created time is for tomorrow
+      const actualDiffMs = diffMs < 0 ? diffMs + 24 * 60 * 60 * 1000 : diffMs
+
+      const totalMinutes = Math.floor(actualDiffMs / 60000)
+      const seconds = Math.floor((actualDiffMs % 60000) / 1000)
+
+      if (totalMinutes > 0) {
+        setWaitingTime(`${totalMinutes}m ${seconds}s`)
+      } else {
+        setWaitingTime(`${seconds}s`)
+      }
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+
+    return () => clearInterval(interval)
+  }, [createdAt])
+
+  return (
+    <div className="flex items-center justify-center mt-3 pt-3 border-t border-green-200">
+      <div className="flex items-center text-sm text-green-700">
+        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12,6 12,12 16,14"></polyline>
+        </svg>
+        Waiting: {waitingTime}
+      </div>
+    </div>
+  )
+}
+
+const PlayingTimer = ({ startTime }: { startTime: string }) => {
+  const [playingTime, setPlayingTime] = useState("")
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const today = new Date()
+      const [hours, minutes] = startTime.split(":").map(Number)
+      const started = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes)
+      const now = new Date()
+      const diffMs = now.getTime() - started.getTime()
+
+      const actualDiffMs = diffMs < 0 ? diffMs + 24 * 60 * 60 * 1000 : diffMs
+
+      const totalMinutes = Math.floor(actualDiffMs / 60000)
+      const seconds = Math.floor((actualDiffMs % 60000) / 1000)
+
+      if (totalMinutes > 0) {
+        setPlayingTime(`${totalMinutes}m ${seconds}s`)
+      } else {
+        setPlayingTime(`${seconds}s`)
+      }
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+
+    return () => clearInterval(interval)
+  }, [startTime])
+
+  return (
+    <div className="flex items-center justify-center mt-3 pt-3 border-t border-blue-200">
+      <div className="flex items-center text-sm text-blue-700">
+        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12,6 12,12 16,14"></polyline>
+        </svg>
+        Playing: {playingTime}
+      </div>
+    </div>
+  )
+}
+
+const ScoreDisplay = ({ courtId }: { courtId: string }) => {
+  const [score, setScore] = useState({ team1: [0, 0, 0], team2: [0, 0, 0], currentSet: 0 })
+
+  const updateScore = (team: "team1" | "team2", setIndex: number, increment: boolean) => {
+    setScore((prev) => {
+      const newScore = { ...prev }
+      if (increment) {
+        newScore[team][setIndex] = Math.min(newScore[team][setIndex] + 1, 7)
+      } else {
+        newScore[team][setIndex] = Math.max(newScore[team][setIndex] - 1, 0)
+      }
+      return newScore
+    })
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-blue-200">
+      <div className="text-center text-sm font-medium text-blue-800 mb-2">Score</div>
+      <div className="flex justify-between items-center text-sm">
+        <div className="flex-1">
+          <div className="font-medium text-blue-700">Team 1</div>
+          <div className="flex gap-1 mt-1">
+            {score.team1.map((setScore, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <button
+                  onClick={() => updateScore("team1", index, true)}
+                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-t text-xs flex items-center justify-center"
+                >
+                  +
+                </button>
+                <div className="w-6 h-6 bg-white border border-blue-300 rounded text-xs flex items-center justify-center font-medium">
+                  {setScore}
+                </div>
+                <button
+                  onClick={() => updateScore("team1", index, false)}
+                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-b text-xs flex items-center justify-center"
+                >
+                  -
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="px-2 text-blue-600 font-bold">VS</div>
+        <div className="flex-1">
+          <div className="font-medium text-blue-700">Team 2</div>
+          <div className="flex gap-1 mt-1">
+            {score.team2.map((setScore, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <button
+                  onClick={() => updateScore("team2", index, true)}
+                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-t text-xs flex items-center justify-center"
+                >
+                  +
+                </button>
+                <div className="w-6 h-6 bg-white border border-blue-300 rounded text-xs flex items-center justify-center font-medium">
+                  {setScore}
+                </div>
+                <button
+                  onClick={() => updateScore("team2", index, false)}
+                  className="w-6 h-4 bg-blue-100 hover:bg-blue-200 rounded-b text-xs flex items-center justify-center"
+                >
+                  -
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function CourtManagement() {
   const [players, setPlayersState] = useState<Player[]>([])
@@ -835,6 +991,7 @@ export default function CourtManagement() {
                           </div>
                         ))}
                       </div>
+                      <WaitingTimer createdAt={group.createdAt} />
                     </div>
                   ))
                 )}
@@ -1073,6 +1230,7 @@ export default function CourtManagement() {
                         </div>
                       ))}
                     </div>
+                    <WaitingTimer createdAt={group.createdAt} />
                   </div>
                 ))
               )}
@@ -1116,79 +1274,104 @@ export default function CourtManagement() {
         {/* Courts Section */}
         <h2 className="text-xl font-bold mb-4">Courts</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {/* Updated court card rendering to include timer and score for in-use courts */}
           {courts.map((court) => (
-            <Card
+            <div
               key={court.id}
-              className={`
-                ${court.status === "available" ? "border-green-500/50" : ""}
-                ${court.status === "in-use" ? "border-blue-500/50" : ""}
-                ${court.status === "maintenance" ? "border-orange-500/50" : ""}
-                ${court.status === "classes" ? "border-purple-500/50" : ""}
-                ${court.status === "tournament" ? "border-red-500/50" : ""}
-              `}
+              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                court.status === "available"
+                  ? "border-green-300 bg-green-50 hover:border-green-400"
+                  : court.status === "in-use"
+                    ? "border-blue-300 bg-blue-50"
+                    : court.status === "maintenance"
+                      ? "border-orange-300 bg-orange-50"
+                      : court.status === "tournament"
+                        ? "border-red-300 bg-red-50"
+                        : "border-purple-300 bg-purple-50"
+              }`}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(court, e)}
+              onDrop={(e) => handleDrop(e, court)}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <span>{court.name}</span>
-                  <CustomBadge variant={getStatusBadgeVariant(court.status)}>
-                    {getStatusDisplayText(court.status)}
-                  </CustomBadge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {court.status === "available" ? (
-                  <div className="h-24 border-2 border-dashed rounded-lg flex items-center justify-center">
-                    <p className="text-muted-foreground">Drag groups here</p>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-lg">{court.name}</h3>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    court.status === "available"
+                      ? "bg-green-100 text-green-800"
+                      : court.status === "in-use"
+                        ? "bg-blue-100 text-blue-800"
+                        : court.status === "maintenance"
+                          ? "bg-orange-100 text-orange-800"
+                          : court.status === "tournament"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-purple-100 text-purple-800"
+                  }`}
+                >
+                  {getStatusDisplayText(court.status)}
+                </span>
+              </div>
+
+              {court.status === "in-use" && court.players && court.players.length > 0 && (
+                <>
+                  <div className="text-sm text-gray-600 mb-3">
+                    {court.startTime} - {court.endTime}
                   </div>
-                ) : court.status === "in-use" ? (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm text-muted-foreground">
-                        {court.startTime} - {court.endTime}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {court.players.map((player, index) => (
+                      <div
+                        key={player.id}
+                        className="bg-blue-100 p-2 rounded text-sm text-center font-medium text-blue-800"
+                      >
+                        {player.name.length > 10 ? `${player.name.substring(0, 10)}...` : player.name}
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => handleEndSession(court)}>
-                        End Session
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {court.players.map((player) => (
-                        <div key={player.id} className="flex items-center p-2 bg-blue-100 rounded-lg">
-                          <img
-                            src={player.photoUrl || "/placeholder.svg"}
-                            alt={player.name}
-                            className="w-8 h-8 rounded-full mr-2"
-                          />
-                          <div className="text-sm font-medium truncate">{player.name}</div>
-                        </div>
-                      ))}
-                    </div>
+                    ))}
                   </div>
-                ) : court.status === "classes" ? (
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="flex flex-col items-center text-muted-foreground">
-                      <AlertCircle className="h-8 w-8 mb-2" />
-                      <p>Reserved for classes</p>
-                    </div>
+                  <div className="flex justify-center mb-3">
+                    <button
+                      onClick={() => handleEndSession(court)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      End Session
+                    </button>
                   </div>
-                ) : court.status === "tournament" ? (
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="flex flex-col items-center text-muted-foreground">
-                      <AlertCircle className="h-8 w-8 mb-2" />
-                      <p>Reserved for tournament</p>
-                    </div>
+                  <PlayingTimer startTime={court.startTime || "00:00"} />
+                  <ScoreDisplay courtId={court.id} />
+                </>
+              )}
+
+              {court.status === "available" && (
+                <div className="h-24 border-2 border-dashed rounded-lg flex items-center justify-center">
+                  <p className="text-muted-foreground">Drag groups here</p>
+                </div>
+              )}
+
+              {court.status === "maintenance" && (
+                <div className="h-24 flex items-center justify-center">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <AlertCircle className="h-8 w-8 mb-2" />
+                    <p>Under maintenance</p>
                   </div>
-                ) : (
-                  <div className="h-24 flex items-center justify-center">
-                    <div className="flex flex-col items-center text-muted-foreground">
-                      <AlertCircle className="h-8 w-8 mb-2" />
-                      <p>Under maintenance</p>
-                    </div>
+                </div>
+              )}
+
+              {court.status === "tournament" && (
+                <div className="h-24 flex items-center justify-center">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <AlertCircle className="h-8 w-8 mb-2" />
+                    <p>Reserved for tournament</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+
+              {court.status === "classes" && (
+                <div className="h-24 flex items-center justify-center">
+                  <div className="flex flex-col items-center text-muted-foreground">
+                    <AlertCircle className="h-8 w-8 mb-2" />
+                    <p>Reserved for classes</p>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
 

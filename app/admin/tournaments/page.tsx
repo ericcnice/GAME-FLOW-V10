@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Trophy, Users, Calendar, Play, Crown, Award } from "lucide-react"
+import { Trophy, Users, Calendar, Play, Crown, Award, Share2, X } from "lucide-react"
 import { toast } from "sonner"
 
 interface Player {
@@ -16,6 +16,9 @@ interface Player {
   ranking: number
   points: number
   photo?: string
+  wins?: number
+  losses?: number
+  lastMatch?: string
 }
 
 interface Match {
@@ -43,6 +46,7 @@ export default function TournamentsPage() {
   const [currentTournament, setCurrentTournament] = useState<Tournament | null>(null)
   const [availablePlayers, setAvailablePlayers] = useState<Player[]>([])
   const [selectedPlayerCount, setSelectedPlayerCount] = useState<string>("8")
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null)
 
   useEffect(() => {
     loadTournaments()
@@ -79,6 +83,9 @@ export default function TournamentsPage() {
             ranking: p.ranking,
             points: p.points,
             photo: p.photo,
+            wins: Math.floor(Math.random() * 20) + 5,
+            losses: Math.floor(Math.random() * 10) + 2,
+            lastMatch: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR"),
           }))
           .sort((a: Player, b: Player) => a.ranking - b.ranking)
         setAvailablePlayers(activePlayers)
@@ -94,18 +101,14 @@ export default function TournamentsPage() {
       return
     }
 
-    // Select top players by ranking
     const selectedPlayers = availablePlayers.slice(0, playerCount)
 
-    // Create tournament bracket
     const bracket: Match[] = []
     let matchId = 1
 
-    // Generate first round matches
     const rounds = Math.log2(playerCount)
     let currentRoundMatches = playerCount / 2
 
-    // First round (Quarterfinals for 8 players, etc.)
     for (let i = 0; i < currentRoundMatches; i++) {
       bracket.push({
         id: `match-${matchId++}`,
@@ -117,7 +120,6 @@ export default function TournamentsPage() {
       })
     }
 
-    // Generate subsequent rounds
     for (let round = 2; round <= rounds; round++) {
       currentRoundMatches = currentRoundMatches / 2
       for (let i = 0; i < currentRoundMatches; i++) {
@@ -160,6 +162,8 @@ export default function TournamentsPage() {
         return "Quartas de Final"
       case 4:
         return "Oitavas de Final"
+      case 5:
+        return "Primeira Rodada"
       default:
         return `Rodada ${currentRound}`
     }
@@ -168,29 +172,24 @@ export default function TournamentsPage() {
   const simulateMatch = (match: Match) => {
     if (!match.player1 || !match.player2) return
 
-    // Simple simulation based on ranking (lower ranking = better player)
     const player1Strength = 1000 - match.player1.ranking * 10 + Math.random() * 200
     const player2Strength = 1000 - match.player2.ranking * 10 + Math.random() * 200
 
     const winner = player1Strength > player2Strength ? match.player1 : match.player2
     const loser = winner === match.player1 ? match.player2 : match.player1
 
-    // Generate realistic tennis score
     const scores = ["6-4, 6-3", "6-2, 6-4", "7-5, 6-4", "6-3, 7-6", "6-4, 3-6, 6-2", "7-6, 6-4", "6-1, 6-3", "6-4, 6-2"]
     const score = scores[Math.floor(Math.random() * scores.length)]
 
-    // Update match
     const updatedMatch = {
       ...match,
       winner,
       score,
     }
 
-    // Update tournament bracket
     if (currentTournament) {
       const updatedBracket = currentTournament.bracket.map((m) => (m.id === match.id ? updatedMatch : m))
 
-      // Advance winner to next round
       const nextRoundMatch = findNextRoundMatch(match, updatedBracket)
       if (nextRoundMatch) {
         const updatedNextMatch = {
@@ -217,7 +216,7 @@ export default function TournamentsPage() {
   }
 
   const findNextRoundMatch = (currentMatch: Match, bracket: Match[]): Match | null => {
-    const rounds = ["Quartas de Final", "Semifinal", "Final"]
+    const rounds = ["Primeira Rodada", "Oitavas de Final", "Quartas de Final", "Semifinal", "Final"]
     const currentRoundIndex = rounds.indexOf(currentMatch.round)
     if (currentRoundIndex === -1 || currentRoundIndex === rounds.length - 1) return null
 
@@ -230,14 +229,48 @@ export default function TournamentsPage() {
 
   const resetTournament = () => {
     setCurrentTournament(null)
+    setExpandedMatch(null)
     toast.success("Torneio resetado!")
+  }
+
+  const shareMatch = async (match: Match) => {
+    if (!match.player1 || !match.player2) return
+
+    const matchText = `🎾 ${match.player1.name} vs ${match.player2.name}\n${match.round} - ${currentTournament?.name}\n\n#TennisCourtManager`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Partida de Tênis",
+          text: matchText,
+        })
+      } catch (error) {
+        navigator.clipboard.writeText(matchText)
+        toast.success("Link copiado para a área de transferência!")
+      }
+    } else {
+      navigator.clipboard.writeText(matchText)
+      toast.success("Texto copiado para a área de transferência!")
+    }
+  }
+
+  const shareToWhatsApp = (match: Match) => {
+    if (!match.player1 || !match.player2) return
+
+    const matchText = `🎾 ${match.player1.name} vs ${match.player2.name}\n${match.round} - ${currentTournament?.name}\n\n#TennisCourtManager`
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(matchText)}`
+    window.open(whatsappUrl, "_blank")
   }
 
   const renderBracket = () => {
     if (!currentTournament) return null
 
-    const rounds = ["Quartas de Final", "Semifinal", "Final"]
-    const bracketRounds = rounds.map((roundName) =>
+    const allRounds = ["Primeira Rodada", "Oitavas de Final", "Quartas de Final", "Semifinal", "Final"]
+    const tournamentRounds = allRounds.filter((roundName) =>
+      currentTournament.bracket.some((match) => match.round === roundName),
+    )
+
+    const bracketRounds = tournamentRounds.map((roundName) =>
       currentTournament.bracket.filter((match) => match.round === roundName),
     )
 
@@ -245,81 +278,197 @@ export default function TournamentsPage() {
       <div className="flex justify-center items-center gap-8 overflow-x-auto pb-4">
         {bracketRounds.map((roundMatches, roundIndex) => (
           <div key={roundIndex} className="flex flex-col gap-4 min-w-[250px]">
-            <h3 className="text-center font-bold text-lg mb-4">{rounds[roundIndex]}</h3>
+            <h3 className="text-center font-bold text-lg mb-4">{tournamentRounds[roundIndex]}</h3>
             <div className="flex flex-col gap-6">
               {roundMatches.map((match) => (
-                <Card key={match.id} className="relative">
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      {/* Player 1 */}
-                      <div
-                        className={`flex items-center gap-3 p-2 rounded ${
-                          match.winner?.id === match.player1?.id
-                            ? "bg-green-100 border-green-500 border"
-                            : "bg-muted/50"
-                        }`}
-                      >
-                        {match.player1 ? (
-                          <>
-                            <img
-                              src={match.player1.photo || "/placeholder.svg"}
-                              alt={match.player1.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{match.player1.name}</div>
-                              <div className="text-xs text-muted-foreground">#{match.player1.ranking}</div>
-                            </div>
-                            {match.winner?.id === match.player1.id && <Crown className="h-4 w-4 text-yellow-500" />}
-                          </>
-                        ) : (
-                          <div className="text-sm text-muted-foreground italic">Aguardando...</div>
-                        )}
-                      </div>
-
-                      {/* VS */}
-                      <div className="text-center text-xs text-muted-foreground">VS</div>
-
-                      {/* Player 2 */}
-                      <div
-                        className={`flex items-center gap-3 p-2 rounded ${
-                          match.winner?.id === match.player2?.id
-                            ? "bg-green-100 border-green-500 border"
-                            : "bg-muted/50"
-                        }`}
-                      >
-                        {match.player2 ? (
-                          <>
-                            <img
-                              src={match.player2.photo || "/placeholder.svg"}
-                              alt={match.player2.name}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{match.player2.name}</div>
-                              <div className="text-xs text-muted-foreground">#{match.player2.ranking}</div>
-                            </div>
-                            {match.winner?.id === match.player2.id && <Crown className="h-4 w-4 text-yellow-500" />}
-                          </>
-                        ) : (
-                          <div className="text-sm text-muted-foreground italic">Aguardando...</div>
-                        )}
-                      </div>
-
-                      {/* Score and Action */}
-                      {match.score ? (
-                        <div className="text-center">
-                          <div className="text-sm font-medium">{match.score}</div>
+                <div key={match.id} className="relative">
+                  <Card
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      expandedMatch === match.id ? "ring-2 ring-blue-500" : ""
+                    }`}
+                    onClick={() => setExpandedMatch(expandedMatch === match.id ? null : match.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div
+                          className={`flex items-center gap-3 p-2 rounded ${
+                            match.winner?.id === match.player1?.id
+                              ? "bg-green-100 border-green-500 border"
+                              : "bg-muted/50"
+                          }`}
+                        >
+                          {match.player1 ? (
+                            <>
+                              <img
+                                src={
+                                  match.player1.photo ||
+                                  `/placeholder.svg?height=32&width=32&text=${match.player1.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}`
+                                }
+                                alt={match.player1.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{match.player1.name}</div>
+                                <div className="text-xs text-muted-foreground">#{match.player1.ranking}</div>
+                              </div>
+                              {match.winner?.id === match.player1.id && <Crown className="h-4 w-4 text-yellow-500" />}
+                            </>
+                          ) : (
+                            <div className="text-sm text-muted-foreground italic">Aguardando...</div>
+                          )}
                         </div>
-                      ) : match.player1 && match.player2 ? (
-                        <Button size="sm" onClick={() => simulateMatch(match)} className="w-full" variant="outline">
-                          <Play className="h-3 w-3 mr-1" />
-                          Simular
-                        </Button>
-                      ) : null}
+
+                        <div className="text-center text-xs text-muted-foreground">VS</div>
+
+                        <div
+                          className={`flex items-center gap-3 p-2 rounded ${
+                            match.winner?.id === match.player2?.id
+                              ? "bg-green-100 border-green-500 border"
+                              : "bg-muted/50"
+                          }`}
+                        >
+                          {match.player2 ? (
+                            <>
+                              <img
+                                src={
+                                  match.player2.photo ||
+                                  `/placeholder.svg?height=32&width=32&text=${match.player2.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}`
+                                }
+                                alt={match.player2.name}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{match.player2.name}</div>
+                                <div className="text-xs text-muted-foreground">#{match.player2.ranking}</div>
+                              </div>
+                              {match.winner?.id === match.player2.id && <Crown className="h-4 w-4 text-yellow-500" />}
+                            </>
+                          ) : (
+                            <div className="text-sm text-muted-foreground italic">Aguardando...</div>
+                          )}
+                        </div>
+
+                        {match.score ? (
+                          <div className="text-center">
+                            <div className="text-sm font-medium">{match.score}</div>
+                          </div>
+                        ) : match.player1 && match.player2 ? (
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              simulateMatch(match)
+                            }}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Simular
+                          </Button>
+                        ) : null}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {expandedMatch === match.id && match.player1 && match.player2 && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-2 animate-in slide-in-from-top-2 duration-300">
+                      <Card className="border-2 border-blue-500 shadow-xl">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-lg">Head-to-Head</CardTitle>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setExpandedMatch(null)
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="text-center space-y-2">
+                              <img
+                                src={
+                                  match.player1.photo ||
+                                  `/placeholder.svg?height=64&width=64&text=${match.player1.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}`
+                                }
+                                alt={match.player1.name}
+                                className="w-16 h-16 rounded-full object-cover mx-auto"
+                              />
+                              <div className="font-medium">{match.player1.name}</div>
+                              <div className="text-sm text-muted-foreground">Ranking #{match.player1.ranking}</div>
+                              <div className="text-xs space-y-1">
+                                <div>Vitórias: {match.player1.wins}</div>
+                                <div>Derrotas: {match.player1.losses}</div>
+                                <div>Último jogo: {match.player1.lastMatch}</div>
+                              </div>
+                            </div>
+                            <div className="text-center space-y-2">
+                              <img
+                                src={
+                                  match.player2.photo ||
+                                  `/placeholder.svg?height=64&width=64&text=${match.player2.name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}`
+                                }
+                                alt={match.player2.name}
+                                className="w-16 h-16 rounded-full object-cover mx-auto"
+                              />
+                              <div className="font-medium">{match.player2.name}</div>
+                              <div className="text-sm text-muted-foreground">Ranking #{match.player2.ranking}</div>
+                              <div className="text-xs space-y-1">
+                                <div>Vitórias: {match.player2.wins}</div>
+                                <div>Derrotas: {match.player2.losses}</div>
+                                <div>Último jogo: {match.player2.lastMatch}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 pt-3 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                shareToWhatsApp(match)
+                              }}
+                              className="flex-1"
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              WhatsApp
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                shareMatch(match)
+                              }}
+                              className="flex-1"
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Compartilhar
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               ))}
             </div>
           </div>
@@ -343,7 +492,6 @@ export default function TournamentsPage() {
 
         {!currentTournament ? (
           <div className="space-y-6">
-            {/* Tournament Setup */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -383,7 +531,6 @@ export default function TournamentsPage() {
               </CardContent>
             </Card>
 
-            {/* Previous Tournaments */}
             {tournaments.length > 0 && (
               <Card>
                 <CardHeader>
@@ -421,7 +568,6 @@ export default function TournamentsPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Tournament Header */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -452,7 +598,6 @@ export default function TournamentsPage() {
               </CardHeader>
             </Card>
 
-            {/* Tournament Bracket */}
             <Card>
               <CardHeader>
                 <CardTitle>Chave do Torneio</CardTitle>
