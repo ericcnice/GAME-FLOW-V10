@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Calendar, Users, Settings, MenuIcon, Home } from "lucide-react"
+import { LayoutDashboard, Calendar, Users, Settings, MenuIcon, Home, Trophy } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useMobile } from "@/hooks/use-mobile"
 
@@ -21,6 +21,7 @@ export function AdminHeader() {
     { path: "/admin/dashboard", icon: <LayoutDashboard className="h-4 w-4 mr-2" />, label: "Dashboard" },
     { path: "/admin/courts", icon: <Calendar className="h-4 w-4 mr-2" />, label: "Courts" },
     { path: "/admin/players", icon: <Users className="h-4 w-4 mr-2" />, label: "Players" },
+    { path: "/admin/tournaments", icon: <Trophy className="h-4 w-4 mr-2" />, label: "Tournaments" },
     { path: "/admin/settings", icon: <Settings className="h-4 w-4 mr-2" />, label: "Settings" },
   ]
 
