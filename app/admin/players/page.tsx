@@ -10,9 +10,34 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Eye, Edit, Trash2, Phone, Mail, Trophy, TrendingUp, History, Lightbulb } from "lucide-react"
+import {
+  Search,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  Trophy,
+  TrendingUp,
+  History,
+  Lightbulb,
+  ChevronUp,
+  ChevronDown,
+  MoreHorizontal,
+  User,
+} from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
 
 interface Player {
   id: string
@@ -33,76 +58,81 @@ interface Player {
   losses: number
   winRate: number
   points: number
+  gender?: "male" | "female"
 }
 
 const generateMockPlayers = (): Player[] => {
   const requiredPlayers = [
-    { name: "Heloisa Bertelli", slug: "@heloisa.bertelli" },
-    { name: "Yasmim Costa", slug: "@yasmim.costa" },
-    { name: "Manuel Cunha", slug: "@manuel.cunha" },
-    { name: "Pedro Cunha", slug: "@pedro.cunha" },
+    { name: "Heloisa Bertelli", slug: "@heloisa.bertelli", gender: "female" as const },
+    { name: "Yasmim Costa", slug: "@yasmim.costa", gender: "female" as const },
+    { name: "Manuel Cunha", slug: "@manuel.cunha", gender: "male" as const },
+    { name: "Pedro Cunha", slug: "@pedro.cunha", gender: "male" as const },
+    { name: "Eric Nice", slug: "@eric.nice", gender: "male" as const },
   ]
 
-  const firstNames = [
-    "Ana",
+  const maleNames = [
     "Bruno",
     "Carlos",
-    "Diana",
     "Eduardo",
-    "Fernanda",
     "Gabriel",
-    "Helena",
     "Igor",
-    "Julia",
     "Lucas",
-    "Mariana",
     "Nicolas",
-    "Olivia",
     "Paulo",
-    "Rafaela",
     "Sergio",
-    "Tatiana",
     "Victor",
-    "Zoe",
     "André",
-    "Beatriz",
     "Caio",
-    "Daniela",
     "Enzo",
-    "Fabiana",
     "Gustavo",
-    "Isabela",
     "João",
-    "Karina",
     "Leonardo",
-    "Monica",
     "Nathan",
-    "Patricia",
     "Rafael",
-    "Sabrina",
     "Thiago",
-    "Vanessa",
     "William",
-    "Ximena",
     "Alessandro",
-    "Bianca",
     "Cesar",
-    "Debora",
     "Emilio",
-    "Flavia",
     "Henrique",
-    "Ingrid",
     "Jorge",
-    "Larissa",
     "Marcelo",
-    "Natalia",
     "Oscar",
-    "Priscila",
     "Ricardo",
-    "Silvia",
     "Tomas",
-    "Ursula",
     "Vinicius",
+  ]
+
+  const femaleNames = [
+    "Ana",
+    "Diana",
+    "Fernanda",
+    "Helena",
+    "Julia",
+    "Mariana",
+    "Olivia",
+    "Rafaela",
+    "Tatiana",
+    "Zoe",
+    "Beatriz",
+    "Daniela",
+    "Fabiana",
+    "Isabela",
+    "Karina",
+    "Monica",
+    "Patricia",
+    "Sabrina",
+    "Vanessa",
+    "Ximena",
+    "Bianca",
+    "Debora",
+    "Flavia",
+    "Ingrid",
+    "Larissa",
+    "Natalia",
+    "Priscila",
+    "Silvia",
+    "Ursula",
     "Yara",
   ]
 
@@ -169,33 +199,41 @@ const generateMockPlayers = (): Player[] => {
     const losses = Math.floor(Math.random() * 50) + 5
     const winRate = Math.round((wins / (wins + losses)) * 100)
 
+    const isEricNice = req.name === "Eric Nice"
+
     players.push({
       id: `req-${index + 1}`,
       name: req.name,
       slug: req.slug,
-      email: `${req.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
-      phone: `(11) ${Math.floor(Math.random() * 90000) + 10000}-${Math.floor(Math.random() * 9000) + 1000}`,
+      email: isEricNice ? "eric.nice@email.com" : `${req.name.toLowerCase().replace(/\s+/g, ".")}@email.com`,
+      phone: isEricNice
+        ? "(11) 90000-0000"
+        : `(11) ${Math.floor(Math.random() * 90000) + 10000}-${Math.floor(Math.random() * 9000) + 1000}`,
       cpf: `${Math.floor(Math.random() * 900) + 100}.${Math.floor(Math.random() * 900) + 100}.${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 90) + 10}`,
-      category: categories[Math.floor(Math.random() * categories.length)],
-      level: levels[Math.floor(Math.random() * levels.length)],
+      category: isEricNice ? "Avançado" : categories[Math.floor(Math.random() * categories.length)],
+      level: isEricNice ? "A" : levels[Math.floor(Math.random() * levels.length)],
       status: "active",
       registrationDate: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1)
         .toISOString()
         .split("T")[0],
       lastActivity: new Date(2024, 11, Math.floor(Math.random() * 20) + 1).toISOString().split("T")[0],
       lastCheckIn: new Date(2024, 11, Math.floor(Math.random() * 7) + 15).toISOString().split("T")[0],
-      photo: `/placeholder.svg?height=40&width=40&query=tennis player ${req.name}`,
+      photo: `/placeholder.svg?height=40&width=40&query=${req.gender === "male" ? "male" : "female"} tennis player ${req.name}`,
       ranking,
       wins,
       losses,
       winRate,
       points: Math.floor(Math.random() * 2000) + 500,
+      gender: req.gender,
     })
   })
 
-  // Generate remaining 196 players
-  for (let i = 4; i < 200; i++) {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+  // Generate remaining 195 players (200 total - 5 required)
+  for (let i = 5; i < 200; i++) {
+    const isMale = Math.random() > 0.5
+    const firstName = isMale
+      ? maleNames[Math.floor(Math.random() * maleNames.length)]
+      : femaleNames[Math.floor(Math.random() * femaleNames.length)]
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
     const name = `${firstName} ${lastName}`
     const slug = `@${firstName.toLowerCase()}.${lastName.toLowerCase()}`
@@ -219,12 +257,13 @@ const generateMockPlayers = (): Player[] => {
         .split("T")[0],
       lastActivity: new Date(2024, 11, Math.floor(Math.random() * 20) + 1).toISOString().split("T")[0],
       lastCheckIn: new Date(2024, 11, Math.floor(Math.random() * 7) + 15).toISOString().split("T")[0],
-      photo: `/placeholder.svg?height=40&width=40&query=tennis player ${name}`,
+      photo: `/placeholder.svg?height=40&width=40&query=${isMale ? "male" : "female"} tennis player ${name}`,
       ranking,
       wins,
       losses,
       winRate,
       points: Math.floor(Math.random() * 1500) + 200,
+      gender: isMale ? "male" : "female",
     })
   }
 
@@ -244,6 +283,9 @@ function PlayersManagementContent() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [levelFilter, setLevelFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null)
+  const [editingPlayer, setEditingPlayer] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<Partial<Player>>({})
   const playersPerPage = 10
 
   useEffect(() => {
@@ -273,6 +315,41 @@ function PlayersManagementContent() {
       setPlayers(mockPlayers)
       localStorage.setItem("tennis-players", JSON.stringify(mockPlayers))
     }
+  }
+
+  const handleViewPlayer = (playerId: string) => {
+    setExpandedPlayer(expandedPlayer === playerId ? null : playerId)
+    setEditingPlayer(null)
+  }
+
+  const handleEditPlayer = (playerId: string) => {
+    const player = players.find((p) => p.id === playerId)
+    if (player) {
+      setEditingPlayer(playerId)
+      setEditForm({
+        email: player.email,
+        phone: player.phone,
+        slug: player.slug,
+        category: player.category,
+        level: player.level,
+        status: player.status,
+      })
+      setExpandedPlayer(null)
+    }
+  }
+
+  const handleSaveEdit = (playerId: string) => {
+    const updatedPlayers = players.map((player) => (player.id === playerId ? { ...player, ...editForm } : player))
+    setPlayers(updatedPlayers)
+    localStorage.setItem("tennis-players", JSON.stringify(updatedPlayers))
+    setEditingPlayer(null)
+    setEditForm({})
+    toast.success("Jogador atualizado com sucesso!")
+  }
+
+  const handleCancelEdit = () => {
+    setEditingPlayer(null)
+    setEditForm({})
   }
 
   const filteredPlayers = players.filter((player) => {
@@ -313,6 +390,30 @@ function PlayersManagementContent() {
     return (
       <Badge variant={variants[status as keyof typeof variants] as any}>{labels[status as keyof typeof labels]}</Badge>
     )
+  }
+
+  const generatePlayerStats = (player: Player) => {
+    const totalMatches = player.wins + player.losses
+    const avgMatchDuration = Math.floor(Math.random() * 60) + 45 // 45-105 minutes
+    const totalCourtTime = totalMatches * avgMatchDuration
+    const gamesPerWeek = Math.floor(Math.random() * 5) + 1
+    const gamesPerMonth = gamesPerWeek * 4
+
+    // Generate recent opponents
+    const recentOpponents = players
+      .filter((p) => p.id !== player.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 5)
+      .map((p) => p.name)
+
+    return {
+      totalMatches,
+      avgMatchDuration,
+      totalCourtTime,
+      gamesPerWeek,
+      gamesPerMonth,
+      recentOpponents,
+    }
   }
 
   const topPlayers = players.slice(0, 3)
@@ -425,66 +526,248 @@ function PlayersManagementContent() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
+                      {/* Enhanced player card rendering with proper expandable view and inline editing */}
                       {paginatedPlayers.map((player) => (
-                        <TableRow key={player.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={player.photo || "/placeholder.svg"}
-                                alt={player.name}
-                                className="w-10 h-10 rounded-full object-cover"
-                              />
-                              <div>
-                                <div className="font-medium">{player.name}</div>
-                                <div className="text-sm text-muted-foreground">{player.slug}</div>
+                        <Card key={player.id} className="mb-4">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage src={player.photo || "/placeholder.svg"} alt={player.name} />
+                                  <AvatarFallback>
+                                    {player.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h3 className="font-semibold">{player.name}</h3>
+                                  <p className="text-sm text-muted-foreground">{player.slug}</p>
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    {getStatusBadge(player.status)}
+                                    <Badge variant="outline">
+                                      {player.category} {player.level}
+                                    </Badge>
+                                    <Badge variant="secondary">#{player.ranking}</Badge>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1 text-sm">
-                                <Mail className="h-3 w-3" />
-                                {player.email}
-                              </div>
-                              <div className="flex items-center gap-1 text-sm">
-                                <Phone className="h-3 w-3" />
-                                {player.phone}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{player.category}</div>
-                              <div className="text-sm text-muted-foreground">Nível {player.level}</div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{new Date(player.lastCheckIn).toLocaleDateString("pt-BR")}</div>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(player.status)}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Link href={`/admin/players/${player.id}`}>
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="h-4 w-4" />
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setExpandedPlayer(expandedPlayer === player.id ? null : player.id)}
+                                >
+                                  {expandedPlayer === player.id ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
                                 </Button>
-                              </Link>
-                              <Link href={`/admin/players/edit/${player.id}`}>
-                                <Button variant="ghost" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeletePlayer(player.id)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleViewPlayer(player.id)}>
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditingPlayer(player.id)
+                                        setEditForm(player)
+                                        setExpandedPlayer(player.id)
+                                      }}
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleDeletePlayer(player.id)}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                          </TableCell>
-                        </TableRow>
+
+                            {expandedPlayer === player.id && (
+                              <div className="mt-4 pt-4 border-t">
+                                {editingPlayer === player.id ? (
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                        <Label htmlFor="edit-email">Email</Label>
+                                        <Input
+                                          id="edit-email"
+                                          value={editForm.email || ""}
+                                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="edit-phone">Phone</Label>
+                                        <Input
+                                          id="edit-phone"
+                                          value={editForm.phone || ""}
+                                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="edit-username">Username</Label>
+                                        <Input
+                                          id="edit-username"
+                                          value={editForm.slug || ""}
+                                          onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="edit-category">Category</Label>
+                                        <Select
+                                          value={editForm.category || ""}
+                                          onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select category" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="Iniciante">Iniciante</SelectItem>
+                                            <SelectItem value="Intermediário">Intermediário</SelectItem>
+                                            <SelectItem value="Avançado">Avançado</SelectItem>
+                                            <SelectItem value="Profissional">Profissional</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="edit-level">Level</Label>
+                                        <Select
+                                          value={editForm.level || ""}
+                                          onValueChange={(value) => setEditForm({ ...editForm, level: value })}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select level" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="A">A</SelectItem>
+                                            <SelectItem value="B">B</SelectItem>
+                                            <SelectItem value="C">C</SelectItem>
+                                            <SelectItem value="D">D</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div>
+                                        <Label htmlFor="edit-status">Status</Label>
+                                        <Select
+                                          value={editForm.status || ""}
+                                          onValueChange={(value) =>
+                                            setEditForm({
+                                              ...editForm,
+                                              status: value as "active" | "inactive" | "suspended",
+                                            })
+                                          }
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select status" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="active">Active</SelectItem>
+                                            <SelectItem value="inactive">Inactive</SelectItem>
+                                            <SelectItem value="suspended">Suspended</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-end space-x-2">
+                                      <Button variant="outline" onClick={handleCancelEdit}>
+                                        Cancel
+                                      </Button>
+                                      <Button onClick={() => handleSaveEdit(player.id)}>Save Changes</Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="space-y-3">
+                                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                        Contact Info
+                                      </h4>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center space-x-2">
+                                          <Mail className="h-4 w-4 text-muted-foreground" />
+                                          <span className="text-sm">{player.email}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <Phone className="h-4 w-4 text-muted-foreground" />
+                                          <span className="text-sm">{player.phone}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                          <User className="h-4 w-4 text-muted-foreground" />
+                                          <span className="text-sm">{player.cpf}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                        Performance
+                                      </h4>
+                                      <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Wins</span>
+                                          <span className="text-sm font-medium text-green-600">{player.wins}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Losses</span>
+                                          <span className="text-sm font-medium text-red-600">{player.losses}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Win Rate</span>
+                                          <span className="text-sm font-medium">{player.winRate}%</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Points</span>
+                                          <span className="text-sm font-medium">{player.points}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                                        Activity
+                                      </h4>
+                                      <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Registered</span>
+                                          <span className="text-sm">
+                                            {new Date(player.registrationDate).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Last Activity</span>
+                                          <span className="text-sm">
+                                            {new Date(player.lastActivity).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-sm">Last Check-in</span>
+                                          <span className="text-sm">
+                                            {new Date(player.lastCheckIn).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
                       ))}
                     </TableBody>
                   </Table>

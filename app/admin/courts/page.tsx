@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, AlertCircle, Edit, RefreshCw } from "lucide-react"
+import { Clock, AlertCircle, Edit, RefreshCw, Search } from "lucide-react"
 import AdminHeader from "@/components/admin-header"
 import { useToast } from "@/hooks/use-toast"
 import { useMobile } from "@/hooks/use-mobile"
@@ -31,6 +31,7 @@ import {
 } from "@/lib/court-state"
 // Importe o novo componente
 import { CustomBadge } from "@/components/custom-badge"
+import { Input } from "@/components/ui/input"
 
 export default function CourtManagement() {
   const [players, setPlayersState] = useState<Player[]>([])
@@ -53,6 +54,9 @@ export default function CourtManagement() {
 
   // Estado para controlar qual seção está ativa no mobile
   const [activeSection, setActiveSection] = useState<"players" | "groups" | "waiting">("players")
+
+  // Added search term state
+  const [playersSearchTerm, setPlayersSearchTerm] = useState("")
 
   // Function to add a player back to the system (waiting list)
   const addPlayerToSystem = (player: Player) => {
@@ -594,6 +598,17 @@ export default function CourtManagement() {
     })
   }
 
+  // Filter players based on search term
+  const filteredPlayers = players.filter((player) => {
+    const searchTerm = playersSearchTerm.toLowerCase()
+    return (
+      player.name.toLowerCase().includes(searchTerm) ||
+      player.email?.toLowerCase().includes(searchTerm) ||
+      player.username?.toLowerCase().includes(searchTerm) ||
+      player.cpf?.toLowerCase().includes(searchTerm)
+    )
+  })
+
   // Renderização para mobile
   const renderMobileView = () => {
     return (
@@ -636,6 +651,17 @@ export default function CourtManagement() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Buscar por nome, email, @username ou CPF..."
+                    value={playersSearchTerm}
+                    onChange={(e) => setPlayersSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
               <div className="mb-2 text-sm">
                 {players.filter((p) => p.selected).length > 0 && (
                   <div className="flex items-center justify-between">
@@ -660,10 +686,10 @@ export default function CourtManagement() {
                 )}
               </div>
               <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-                {players.length === 0 ? (
+                {filteredPlayers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">No players waiting</div>
                 ) : (
-                  players.map((player) => (
+                  filteredPlayers.map((player) => (
                     <div
                       key={player.id}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${
@@ -887,11 +913,22 @@ export default function CourtManagement() {
                 </div>
               )}
             </div>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nome, email, @username ou CPF..."
+                  value={playersSearchTerm}
+                  onChange={(e) => setPlayersSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              {players.length === 0 ? (
+              {filteredPlayers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No players waiting</div>
               ) : (
-                players.map((player) => (
+                filteredPlayers.map((player) => (
                   <div
                     key={player.id}
                     className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-muted/50 ${
