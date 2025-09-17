@@ -59,6 +59,7 @@ interface Player {
   winRate: number
   points: number
   gender?: "male" | "female"
+  username?: string
 }
 
 const generateMockPlayers = (): Player[] => {
@@ -225,6 +226,7 @@ const generateMockPlayers = (): Player[] => {
       winRate,
       points: Math.floor(Math.random() * 2000) + 500,
       gender: req.gender,
+      username: req.slug,
     })
   })
 
@@ -264,6 +266,7 @@ const generateMockPlayers = (): Player[] => {
       winRate,
       points: Math.floor(Math.random() * 1500) + 200,
       gender: isMale ? "male" : "female",
+      username: slug,
     })
   }
 
@@ -533,17 +536,24 @@ function PlayersManagementContent() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
                                 <Avatar className="h-12 w-12">
-                                  <AvatarImage src={player.photo || "/placeholder.svg"} alt={player.name} />
-                                  <AvatarFallback>
+                                  <AvatarImage
+                                    src={player.photo || "/placeholder.svg"}
+                                    alt={player.name}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none"
+                                    }}
+                                  />
+                                  <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                                     {player.name
                                       .split(" ")
                                       .map((n) => n[0])
-                                      .join("")}
+                                      .join("")
+                                      .toUpperCase()}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <h3 className="font-semibold">{player.name}</h3>
-                                  <p className="text-sm text-muted-foreground">{player.slug}</p>
+                                  <p className="text-sm text-muted-foreground">@{player.username}</p>
                                   <div className="flex items-center space-x-2 mt-1">
                                     {getStatusBadge(player.status)}
                                     <Badge variant="outline">
@@ -820,16 +830,25 @@ function PlayersManagementContent() {
                         >
                           {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
                         </div>
-                        <img
-                          src={player.photo || "/placeholder.svg"}
-                          alt={player.name}
-                          className="w-16 h-16 rounded-full mx-auto mb-2 object-cover"
-                        />
+                        <Avatar className="w-16 h-16 mx-auto mb-2">
+                          <AvatarImage
+                            src={player.photo || "/placeholder.svg"}
+                            alt={player.name}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold text-lg">
+                            {player.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                         <h3 className="font-bold">{player.name}</h3>
-                        <p className="text-sm text-muted-foreground">{player.slug}</p>
-                        <div className="mt-2">
-                          <div className="text-lg font-bold">{player.points} pts</div>
-                          <div className="text-sm text-muted-foreground">{player.winRate}% vitórias</div>
+                        <p className="text-sm text-muted-foreground">{player.category}</p>
+                        <div className="flex items-center justify-center mt-1">
+                          <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
+                          <span className="text-sm font-medium">{player.ranking}</span>
                         </div>
                       </CardContent>
                     </Card>
@@ -864,11 +883,20 @@ function PlayersManagementContent() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <img
-                                src={player.photo || "/placeholder.svg"}
-                                alt={player.name}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage
+                                  src={player.photo || "/placeholder.svg"}
+                                  alt={player.name}
+                                  className="object-cover"
+                                />
+                                <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                                  {player.name
+                                    ?.split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase() || "?"}
+                                </AvatarFallback>
+                              </Avatar>
                               <div>
                                 <div className="font-medium">{player.name}</div>
                                 <div className="text-sm text-muted-foreground">{player.slug}</div>
@@ -935,18 +963,36 @@ function PlayersManagementContent() {
                           <TableCell>{date.toLocaleDateString("pt-BR")}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <img
-                                src={player1?.photo || "/placeholder.svg"}
-                                alt={player1?.name || "Player"}
-                                className="w-6 h-6 rounded-full"
-                              />
+                              <Avatar className="w-6 h-6">
+                                <AvatarImage
+                                  src={player1?.photo || "/placeholder.svg"}
+                                  alt={player1?.name || "Player"}
+                                  className="object-cover"
+                                />
+                                <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                                  {player1?.name
+                                    ?.split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase() || "?"}
+                                </AvatarFallback>
+                              </Avatar>
                               <span className="text-sm">{player1?.name}</span>
                               <span className="text-muted-foreground">vs</span>
-                              <img
-                                src={player2?.photo || "/placeholder.svg"}
-                                alt={player2?.name || "Player"}
-                                className="w-6 h-6 rounded-full"
-                              />
+                              <Avatar className="w-6 h-6">
+                                <AvatarImage
+                                  src={player2?.photo || "/placeholder.svg"}
+                                  alt={player2?.name || "Player"}
+                                  className="object-cover"
+                                />
+                                <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
+                                  {player2?.name
+                                    ?.split(" ")
+                                    .map((n) => n[0])
+                                    .join("")
+                                    .toUpperCase() || "?"}
+                                </AvatarFallback>
+                              </Avatar>
                               <span className="text-sm">{player2?.name}</span>
                             </div>
                           </TableCell>
